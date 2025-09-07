@@ -459,3 +459,184 @@ SUM(CASE WHEN City = 'Pune' THEN Salary END) AS "Pune",
 SUM(CASE WHEN City = 'Delhi' THEN Salary END) AS "Delhi"
 FROM Employee
 GROUP BY EmpID, EmpName;
+
+
+
+HACKER RANK :
+
+Query the list of CITY names STARTing with vowels (a, e, i, o, u) from STATION. Your result cannot contain duplicates.
+
+--using LIKE, ILIKE, REGEXP(Only MYSQL) 
+
+SELECT DISTINCT FROM STATION 
+WHERE CITY LIKE 'a%' OR
+CITY LIKE 'e%' OR
+CITY LIKE 'i%' OR
+CITY LIKE 'o%' OR
+CITY LIKE 'u%'
+ 
+Query the list of CITY names ending with vowels (a, e, i, o, u) from STATION. Your result cannot contain duplicates.
+
+--using BITWISE operator (RIGHT) and MEMBERSHIP operator (IN)
+
+Query the list of CITY names from STATION which have vowels (i.e., a, e, i, o, and u) as both their first and last characters. Your result cannot contain duplicates.
+
+SELECT DISTINCT CITY FROM STATION 
+
+WHERE 
+
+(CITY LIKE 'a%' OR
+CITY LIKE 'e%' OR
+CITY LIKE 'i%' OR
+CITY LIKE 'o%' OR
+CITY LIKE 'u%')
+
+AND
+
+(CITY LIKE '%a' OR
+CITY LIKE '%e' OR
+CITY LIKE '%i' OR
+CITY LIKE '%o' OR
+CITY LIKE '%u')
+
+
+OR 
+
+SELECT DISTINCT CITY FROM STATION 
+WHERE 
+LEFT(CITY,1) IN ('a','e','i','o','u')
+
+AND
+
+RIGHT(CITY,1) IN ('a','e','i','o','u')
+
+--Query the list of CITY names from STATION that do not end with vowels. Your result cannot contain duplicates.
+
+SELECT DISTINCT CITY FROM STATION
+WHERE
+    RIGHT(CITY, 1) NOT IN ('a','e','i','o','u')
+
+--Query the list of CITY names from STATION that do not start with vowels and do not end with vowels. Your result cannot contain duplicates.
+
+SELECT DISTINCT CITY FROM STATION 
+
+WHERE 
+LEFT(CITY,1) NOT IN ('a','e','i','o','u')
+
+AND
+
+RIGHT(CITY,1) NOT IN ('a','e','i','o','u')
+
+
+--Query the Name of any student in STUDENTS who scored higher than 75 Marks. Order your output by the last three characters of each name. If two or more students both have names ending in the same last three characters (i.e.: Bobby, Robby, etc.), secondary sort them by ascending ID.
+
+SELECT NAME FROM STUDENTS
+WHERE MARKS > 75
+ORDER BY RIGHT(NAME, 3), ID ASC
+
+
+--Write a query that prints a list of employee names (i.e.: the name attribute) for employees in Employee having a salary greater than $2000 per month who have been employees for less than 10 months. Sort your result by ascending employee_id.
+
+
+Q. Julia asked her students to create some coding challenges. Write a query to print the hacker_id, name, and the total number of challenges created by each student. Sort your results by the total number of challenges in descending order. If more than one student created the same number of challenges, then sort the result by hacker_id. If more than one student created the same number of challenges and the count is less than the maximum number of challenges created, then exclude those students from the result. (DOUBT)
+
+SELECT h.hacker_id, h.name, COUNT(c.challenge_id) AS total_challenges
+FROM Hackers h
+JOIN Challenges c ON h.hacker_id = c.hacker_id
+GROUP BY h.hacker_id, h.name
+HAVING COUNT(c.challenge_id) = (
+    SELECT MAX(challenge_count)
+    FROM (
+        SELECT COUNT(*) AS challenge_count
+        FROM Challenges
+        GROUP BY hacker_id
+    ) AS sub
+)
+OR COUNT(c.challenge_id) IN (
+    SELECT challenge_count
+    FROM (
+        SELECT COUNT(*) AS challenge_count
+        FROM Challenges
+        GROUP BY hacker_id
+    ) AS sub
+    GROUP BY challenge_count
+    HAVING COUNT(*) = 1
+)
+ORDER BY total_challenges DESC, h.hacker_id ASC;
+
+
+
+Q. Pivot the Occupation column in OCCUPATIONS so that each Name is sorted alphabetically and displayed underneath its corresponding Occupation. The output should consist of four columns (Doctor, Professor, Singer, and Actor) in that specific order, with their respective names listed alphabetically under each column. (doubt)
+
+
+SQL certificate exam (basics) from hacker rank :
+
+Q. On the basis of merit, a company decides to promote some of its employees in its HR division at the end of the quarter because of their high performance. Write a query to find the employee IDs along with the names of all its employees who work in the HR department who earned a bonus of 5000 dollars or more in the last quarter.
+
+SELECT ei.employee_ID, ei.name
+FROM employee_information ei JOIN last_quarter_bonus lqbonus 
+ON ei.employee_ID = lqbonus.employee_ID
+WHERE ei.division = 'HR'
+AND lqbonus.bonus >= 5000;
+
+Q. A stock is considered profitable if the predicted price is strictly greater than the current price. Write a query to find the stock_codes of all the stocks which are profitable based on this definition. Sort the output in ascending order.
+
+SELECT price_today.stock_code
+FROM price_today JOIN price_tomorrow
+ON price_today.stock_code = price_tomorrow.stock_code
+WHERE price_tomorrow.price > price_today.price;
+
+
+TechTFQ : 
+
+Write a SQL Query to fetch all the duplicate records in a table.
+Table Name: USERS
+
+Note: Record is considered duplicate if a user name is present more than once.
+
+Approach: Partition the data based on user name and then give a row number to each of the partitioned user name. If a user name exists more than once then it would have multiple row numbers. Using the row number which is other than 1, we can identify the duplicate records.
+
+-- Query 1:
+
+Write a SQL query to fetch all the duplicate records from a table.
+
+--Tables Structure:
+
+drop table users;
+create table users
+(
+user_id int primary key,
+user_name varchar(30) not null,
+email varchar(50));
+
+insert into users values
+(1, 'Sumit', 'sumit@gmail.com'),
+(2, 'Reshma', 'reshma@gmail.com'),
+(3, 'Farhana', 'farhana@gmail.com'),
+(4, 'Robin', 'robin@gmail.com'),
+(5, 'Robin', 'robin@gmail.com');
+
+select * from users;
+
+-- Solution 1:
+
+-- Replace ctid with rowid for Oracle, MySQL and Microsoft SQLServer
+select *
+from users u
+where u.ctid not in (
+select min(ctid) as ctid
+from users
+group by user_name
+order by ctid);
+
+
+-- Solution 2: Using window function.
+
+select user_id, user_name, email
+from (
+select *,
+row_number() over (partition by user_name order by user_id) as rn
+from users u
+order by user_id) x
+where x.rn <> 1;
+
